@@ -1,0 +1,315 @@
+﻿@page "/"
+
+<div class="content-container">
+    <h1>WordSearch Game!</h1>
+
+    <div class="grid-container">
+        <!-- Word List on the Left -->
+        <div class="word-list-container" style="width:@CalculateMaxWordLength()px 1fr">
+            <div class="form-group">
+                <input type="text" class="form-control" @bind="newWord" placeholder="Enter a word" />
+                <button class="btn btn-primary" @onclick="AddWord">Add</button>
+                <span class="text-danger">@feedbackMessage</span>
+            </div>
+
+            @if (words.Any())
+            {
+                <div class="form-group">
+                    <label>Current Grid Size: @gridSize.width x @gridSize.height</label>
+                    <ul>
+                        @foreach (var word in words)
+                        {
+                            <li class="@(foundWords.Contains(word) ? "found-word" : "")">
+                                @word
+                                <button class="btn btn-danger btn-sm" @onclick="@(() => RemoveWord(word))">Remove</button>
+                            </li>
+                        }
+                        }
+                    </ul>
+                </div>
+            }
+
+        </div>
+
+        <!-- Grid Container (Central) -->
+        <div class="grid-item">
+            <div class="form-group">
+                <button class="btn btn-success" @onclick="GenerateWordSearch" disabled="@(!words.Any())">Generate WordSearch</button>
+                @if (isValidWord)
+                {
+                    <span class="valid-word">Valid Word!</span>
+                }
+            </div>
+
+            @if (grid != null)
+            {
+                <table class="word-search-grid">
+                    @for (int i = 0; i < gridSize.height; i++)
+                    {
+                        <tr>
+                            @for (int j = 0; j < gridSize.width; j++)
+                            {
+                                int row = i, col = j; // Store loop variables
+                                <td class="@(grid[row, col].IsSelected ? "selected-cell" : "")"
+                                    @onclick="() => ToggleCellSelection(row, col)">
+                                    @grid[row, col].Letter
+                                </td>
+                            }
+                        </tr>
+                    }
+                </table>
+
+            }
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private string newWord;
+    private string feedbackMessage = "";
+    private (int width, int height) gridSize;
+    private List<string> words = new List<string>();
+    private List<(int row, int col)> selectedCells = new List<(int row, int col)>();
+    private string currentSelectedWord = string.Empty;
+    private bool isValidWord = false;
+    private GridCell[,] grid;
+    private List<string> foundWords = new List<string>();
+
+
+    private void AddWord()
+    {
+        if (string.IsNullOrWhiteSpace(newWord))
+        {
+            feedbackMessage = "Please enter a word.";
+        }
+        else if (words.Contains(newWord.ToUpper()))
+        {
+            feedbackMessage = "This word is already in the list.";
+        }
+        else
+        {
+            words.Add(newWord.ToUpper());
+            newWord = string.Empty;
+            gridSize = CalculateGridSize();
+            feedbackMessage = ""; // Clear message on successful add
+        }
+    }
+
+    private void RemoveWord(string word)
+    {
+        if (words.Contains(word))
+        {
+            words.Remove(word);
+            gridSize = CalculateGridSize();
+        }
+    }
+
+    private (int width, int height) CalculateGridSize()
+    {
+        int longestWord = words.Any() ? words.Max(word => word.Length) : 0;
+        int totalChars = words.Sum(word => word.Length);
+        double densityFactor = 1.2;
+
+        int squareSize = (int)Math.Ceiling(Math.Sqrt(totalChars * densityFactor));
+        int width = Math.Max(longestWord, squareSize);
+        int height = Math.Max((int)Math.Ceiling((double)totalChars / width), longestWord);
+
+        return (width, height);
+    }    
+
+    private void ToggleCellSelection(int row, int col)
+    {
+        Console.WriteLine($"Cell clicked: Row = {row}, Column = {col}");
+        // Check if the indices are within the bounds of the grid
+        if (row >= 0 && row < gridSize.height && col >= 0 && col < gridSize.width)
+        {
+            grid[row, col].IsSelected = !grid[row, col].IsSelected;
+
+            if (grid[row, col].IsSelected)
+            {
+                // Add the cell to the selected list
+                selectedCells.Add((row, col));
+            }
+            else
+            {
+                // Remove the cell from the selected list
+                selectedCells.Remove((row, col));
+            }
+
+            // Rebuild the current selected word and check if it's valid
+            BuildCurrentSelectedWord();
+        }
+
+        StateHasChanged();
+    }
+
+
+    private void CheckAndMarkFoundWord()
+    {
+        if (isValidWord && !foundWords.Contains(currentSelectedWord))
+        {
+            foundWords.Add(currentSelectedWord);
+            currentSelectedWord = string.Empty;
+            selectedCells.Clear();
+            StateHasChanged();
+        }
+    }
+
+
+    private void BuildCurrentSelectedWord()
+    {
+        string forwardWord = string.Empty;
+        string reverseWord = string.Empty;
+
+        foreach (var cell in selectedCells)
+        {
+            forwardWord += grid[cell.row, cell.col].Letter;
+            reverseWord = grid[cell.row, cell.col].Letter + reverseWord;
+        }
+
+        isValidWord = words.Contains(forwardWord) || words.Contains(reverseWord);
+
+        if (isValidWord)
+        {
+            string foundWord = words.Contains(forwardWord) ? forwardWord : reverseWord;
+            if (!foundWords.Contains(foundWord))
+            {
+                foundWords.Add(foundWord);                
+                currentSelectedWord = string.Empty;
+                selectedCells.Clear();
+                StateHasChanged(); 
+            }
+        }
+    }
+
+
+
+
+    public class GridCell
+    {
+        public char Letter { get; set; }
+        public bool IsSelected { get; set; }
+    }
+
+    private int CalculateMaxWordLength()
+    {
+        if (!words.Any())
+        {
+            return 300; // Default minimum width when there are no words
+        }
+
+        int maxLength = words.Max(word => word.Length);
+        int widthPerCharacter = 8; 
+        int padding = 20; 
+        int calculatedWidth = maxLength * widthPerCharacter + padding;
+
+        int maxWidth = 800; 
+        return Math.Min(calculatedWidth, maxWidth);
+    }
+    private Random random = new Random();
+
+    private void GenerateWordSearch()
+    {
+        grid = new GridCell[gridSize.height, gridSize.width];
+        // Initialize the grid with placeholder characters
+        InitializeGrid();
+
+        foreach (string word in words)
+        {
+            PlaceWordInGrid(word);
+        }
+
+        FillEmptySpaces();
+    }
+
+    private void InitializeGrid()
+    {
+        grid = new GridCell[gridSize.height, gridSize.width];
+
+        for (int i = 0; i < gridSize.height; i++)
+        {
+            for (int j = 0; j < gridSize.width; j++)
+            {
+                grid[i, j] = new GridCell { Letter = '.', IsSelected = false };
+            }
+        }
+    }
+
+    private void PlaceWordInGrid(string word)
+    {
+        word = word.ToUpper();
+        bool wordPlaced = false;
+        while (!wordPlaced)
+        {
+            int startRow = random.Next(0, gridSize.height);
+            int startCol = random.Next(0, gridSize.width);
+            int direction = random.Next(0, 3); // 0 = Horizontal, 1 = Vertical, 2 = Diagonal
+
+            if (CanPlaceWord(word, startRow, startCol, direction))
+            {
+                int row = startRow, col = startCol;
+                foreach (char letter in word)
+                {
+                    grid[row, col].Letter = letter;
+                    switch (direction)
+                    {
+                        case 0: col++; break;
+                        case 1: row++; break;
+                        case 2: row++; col++; break;
+                    }
+                }
+                wordPlaced = true;
+            }
+        }
+    }
+
+
+    private bool CanPlaceWord(string word, int startRow, int startCol, int direction)
+    {
+        int row = startRow, col = startCol;
+
+        foreach (char letter in word)
+        {
+            // Check bounds
+            if (row < 0 || row >= gridSize.height || col < 0 || col >= gridSize.width)
+            {
+                return false;
+            }
+
+            // Check overlap
+            if (grid[row, col].Letter != '.' && grid[row, col].Letter != letter)
+            {
+                return false;
+            }
+
+            // Move to the next cell in the chosen direction
+            switch (direction)
+            {
+                case 0: col++; break; // Horizontal
+                case 1: row++; break; // Vertical
+                case 2: row++; col++; break; // Diagonal
+                                             // Add other directions if needed
+            }
+        }
+
+        return true;
+    }
+
+
+    private void FillEmptySpaces()
+    {
+        for (int i = 0; i < gridSize.height; i++)
+        {
+            for (int j = 0; j < gridSize.width; j++)
+            {
+                if (grid[i, j].Letter == '.')
+                {
+                    grid[i, j].Letter = (char)('A' + random.Next(0, 26)); // Random uppercase letter A-Z
+                }
+            }
+        }
+    }
+
+
+}

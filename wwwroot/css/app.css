@@ -1,0 +1,160 @@
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,...) no-repeat 1rem/1.8rem, #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+    .loading-progress circle {
+        fill: none;
+        stroke: #e0e0e0;
+        stroke-width: 0.6rem;
+        transform-origin: 50% 50%;
+        transform: rotate(-90deg);
+    }
+
+        .loading-progress circle:last-child {
+            stroke: #1b6ec2;
+            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+            transition: stroke-dasharray 0.05s ease-in-out;
+        }
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+}
+
+    .loading-progress-text:after {
+        content: var(--blazor-load-percentage-text, "Loading");
+    }
+
+code {
+    color: #c02d76;
+}
+
+/* New Styles for WordSearch Game */
+.content-container {
+    max-width: 1200px; 
+    margin: auto;
+    padding: 20px;
+}
+
+.word-list-container {
+    max-height: 400px; 
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    /*width: 100px;
+    margin-right: 20px;*/
+}
+
+.word-list-container ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.word-list-container li {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.word-list-container button {
+    margin-left: 20px;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: auto 1fr; 
+    grid-gap: 20px; 
+    margin: auto;
+    max-width: 1200px; 
+    padding: 20px;
+}
+
+.grid-item{
+
+}
+
+/*.flex-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+}*/
+
+/*.flex-item {
+    flex: 1;
+    margin: 10px;
+}*/
+
+.word-search-grid {
+    border-collapse: collapse;
+    margin: auto; 
+}
+
+    .word-search-grid td {
+        border: 1px solid #ddd;
+        width: 30px; 
+        height: 30px; 
+        text-align: center;
+        vertical-align: middle;
+        cursor: pointer; 
+    }
+
+.selected-cell {
+    background-color: #0ff1f1; 
+}
+
+.valid-word {
+    color: #28f211; 
+}
+
+.found-word{
+    text-decoration: line-through;
+    color: #28f211;
+}
