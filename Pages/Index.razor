@@ -21,7 +21,10 @@
                         {
                             <li class="@(foundWords.Contains(word) ? "found-word" : "")">
                                 @word
-                                <button class="btn btn-danger btn-sm" @onclick="@(() => RemoveWord(word))">Remove</button>
+                                @if (!wordSearchGenerated)
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="@(() => RemoveWord(word))">Remove</button>
+                                }
                             </li>
                         }
                         }
@@ -50,11 +53,12 @@
                             @for (int j = 0; j < gridSize.width; j++)
                             {
                                 int row = i, col = j; // Store loop variables
-                                <td class="@(grid[row, col].IsSelected ? "selected-cell" : "")"
+                                <td class="@GetCellClass(row, col)"
                                     @onclick="() => ToggleCellSelection(row, col)">
                                     @grid[row, col].Letter
                                 </td>
                             }
+
                         </tr>
                     }
                 </table>
@@ -75,7 +79,7 @@
     private bool isValidWord = false;
     private GridCell[,] grid;
     private List<string> foundWords = new List<string>();
-
+    private bool wordSearchGenerated = false;
 
     private void AddWord()
     {
@@ -175,7 +179,11 @@
             string foundWord = words.Contains(forwardWord) ? forwardWord : reverseWord;
             if (!foundWords.Contains(foundWord))
             {
-                foundWords.Add(foundWord);                
+                foundWords.Add(foundWord);
+                foreach (var cell in selectedCells)
+                {
+                    grid[cell.row, cell.col].IsCorrectWord = true; 
+                }
                 currentSelectedWord = string.Empty;
                 selectedCells.Clear();
                 StateHasChanged(); 
@@ -190,7 +198,25 @@
     {
         public char Letter { get; set; }
         public bool IsSelected { get; set; }
+        public bool IsCorrectWord { get; set; }
     }
+
+    private string GetCellClass(int row, int col)
+    {
+        if (grid[row, col].IsCorrectWord)
+        {
+            Console.WriteLine($"Row {row}, Col {col} is a correct word.");
+            return "correct-word";
+        }
+        else if (grid[row, col].IsSelected)
+        {
+            Console.WriteLine($"Row {row}, Col {col} is selected.");
+            return "selected-cell";
+        }
+        return string.Empty;
+    }
+
+
 
     private int CalculateMaxWordLength()
     {
@@ -221,8 +247,10 @@
         }
 
         FillEmptySpaces();
-    }
+        wordSearchGenerated = true;
+    }     
 
+    #region Grid and Word Generation
     private void InitializeGrid()
     {
         grid = new GridCell[gridSize.height, gridSize.width];
@@ -264,7 +292,6 @@
         }
     }
 
-
     private bool CanPlaceWord(string word, int startRow, int startCol, int direction)
     {
         int row = startRow, col = startCol;
@@ -296,7 +323,6 @@
         return true;
     }
 
-
     private void FillEmptySpaces()
     {
         for (int i = 0; i < gridSize.height; i++)
@@ -310,6 +336,8 @@
             }
         }
     }
+    #endregion
+    
 
 
 }

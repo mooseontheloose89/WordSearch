@@ -158,3 +158,7 @@ code {
     text-decoration: line-through;
     color: #28f211;
 }
+
+.correct-word{
+    background-color: #28f211
+}
