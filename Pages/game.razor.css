@@ -1,4 +1,4 @@
-.valid.modified:not([type=checkbox]) {
+﻿.valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }
 
@@ -72,93 +72,85 @@
         content: var(--blazor-load-percentage-text, "Loading");
     }
 
-code {
-    color: #c02d76;
-}
 
-/* New Styles for WordSearch Game */
 .content-container {
-    max-width: 1200px; 
-    margin: auto;
-    padding: 20px;
-}
-
-.word-list-container {
-    max-height: 400px; 
-    overflow-y: auto;
-    padding: 10px;
-    border: 1px solid #ddd;
-    /*width: 100px;
-    margin-right: 20px;*/
-}
-
-.word-list-container ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.word-list-container li {
-    margin-bottom: 5px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    margin: 20px;
 }
 
-.word-list-container button {
-    margin-left: 20px;
-}
 
 .grid-container {
-    display: grid;
-    grid-template-columns: auto 1fr; 
-    grid-gap: 20px; 
-    margin: auto;
-    max-width: 1200px; 
-    padding: 20px;
-}
-
-.grid-item{
-
-}
-
-/*.flex-container {
     display: flex;
-    justify-content: space-around;
-    align-items: flex-start;
-}*/
+    justify-content: center;
+    align-items: start;
+    margin-top: 20px;
+}
 
-/*.flex-item {
-    flex: 1;
-    margin: 10px;
-}*/
+
+.word-list-container {
+    margin-right: 20px;
+}
+
+
+    .word-list-container ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .word-list-container li {
+        margin-bottom: 5px;
+        font-size: 16px;
+    }
+
+
+.found-word {
+    text-decoration: line-through;
+    color: gray;
+}
+
+
+.grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 
 .word-search-grid {
     border-collapse: collapse;
-    margin: auto; 
 }
 
     .word-search-grid td {
-        border: 1px solid #ddd;
-        width: 30px; 
-        height: 30px; 
+        width: 30px;
+        height: 30px;
         text-align: center;
-        vertical-align: middle;
-        cursor: pointer; 
+        border: 1px solid #ddd;
+        cursor: pointer;
+        font-size: 16px;
     }
 
+
+        .word-search-grid td:hover {
+            background-color: #f0f0f0;
+        }
+
+
 .selected-cell {
-    background-color: #0ff1f1; 
+    background-color: #add8e6;
 }
 
-.valid-word {
-    color: #28f211; 
+.correct-word {
+    background-color: #90ee90;
 }
 
-.found-word{
-    text-decoration: line-through;
-    color: #28f211;
+
+.form-group {
+    margin-bottom: 15px;
 }
 
-.correct-word{
-    background-color: #28f211
+
+.btn {
+    margin: 5px;
 }

@@ -1,0 +1,233 @@
+﻿@page "/"
+@using WordSearch.Services.Contracts
+@using WordSearch.Services
+@inject IGridService gridService
+@inject IWordManagementService wordManagementService
+@inject IValidationService validationService
+@inject IWordListService wordListService
+
+<div class="content-container">
+    <h1>WordSearch Game!</h1>
+
+    <div class="grid-container">
+        <!-- Word List on the Left -->
+        <div class="word-list-container" style="width:@gridService.CalculateMaxWordLengthForUI(words)px 1fr">
+            <div class="form-group">
+                <input type="text" class="form-control" @bind="newWord" @oninput="ResetFeedbackMessage" placeholder="Enter a word" />
+                <button class="btn btn-primary" @onclick="AddWordToGame">Add</button>
+                <span class="text-danger">@feedbackMessage</span>
+            </div>
+
+            @if (words.Any())
+            {
+                <div class="form-group">
+                    <label>Current Grid Size: @gridSize.width x @gridSize.height</label>
+                    <ul>
+                        @foreach (var word in words)
+                        {
+                            <li class="@(foundWords.Contains(word) ? "found-word" : "")">
+                                @word
+                                @if (!wordSearchGenerated)
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="() => RemoveWordFromGame(word)">Remove</button>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+        </div>
+
+        <!-- Grid Container (Central) -->
+        <div class="grid-item">
+            <div class="form-group">
+                <button class="btn btn-success" @onclick="GenerateWordSearch" disabled="@(!words.Any())">Generate WordSearch</button>
+                @if (wordManagementService.CheckWordSelection(selectedCells, gridService.GetGrid(), words))
+                {
+                    <span class="valid-word">Correct Word Found!</span>
+                }
+
+            </div>
+
+            @if (gridService.GetGrid() != null)
+            {
+                <table class="word-search-grid">
+                    @for (int i = 0; i < gridSize.height; i++)
+                    {
+                        <tr>
+                            @for (int j = 0; j < gridSize.width; j++)
+                            {
+                                int row = i, col = j; // Store loop variables
+                                <td @onmousedown="() => OnMouseDown(row, col)"
+                                    @onmouseenter="() => OnMouseEnter(row, col)"
+                                    @onmouseup="OnMouseUp"
+                                    class="@gridService.GetCellClass(row, col)"
+                                    @onclick="() => gridService.ToggleCellSelection(row, col)">
+                                    @gridService.GetCellValue(row, col)
+                                </td>
+                            }
+
+                        </tr>
+                    }
+                </table>
+
+            }
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private List<string> words;
+    private (int width, int height) gridSize;
+    private bool isGameInitialized = false;
+    private bool wordSearchGenerated = false;
+    private bool isDragging = false;
+    private List<(int row, int col)> selectedCells = new List<(int row, int col)>();
+    private List<string> foundWords = new List<string>();
+
+
+    private void ResetFeedbackMessage()
+    {
+        feedbackMessage = string.Empty;
+    }
+
+    protected override void OnInitialized()
+    {
+        InitializeGame();
+    }
+
+    private void InitializeGame()
+    {        
+        words = wordListService.GetWords();
+        if (words.Any())
+        {
+            gridSize = wordManagementService.CalculateGridSize(words);
+            gridService.InitializeGrid(gridSize.width, gridSize.height);
+            wordManagementService.PlaceWords(words, gridService.GetGrid());
+            wordManagementService.FillEmptySpaces(gridService.GetGrid());
+            isGameInitialized = true;
+        }
+        else
+        {
+            isGameInitialized = false;
+        }
+
+        
+    }
+
+
+    private void OnCellClick(int row, int col)
+    {
+        
+        selectedCells.Add((row, col));
+        
+        var cellModels = selectedCells.Select(c => gridService.GetCell(c.row, c.col)).ToList();
+        var validationResult = validationService.IsValidWordSelection(cellModels);
+
+        if (validationResult.IsValid)
+        {
+            
+        }
+        
+        selectedCells.Clear();
+    }
+
+    private void GenerateWordSearch()
+    {
+        gridSize = wordManagementService.CalculateGridSize(words);
+        gridService.InitializeGrid(gridSize.width, gridSize.height);
+
+        wordManagementService.PlaceWords(words, gridService.GetGrid());
+
+        wordSearchGenerated = true;
+    }
+
+    private void OnMouseDown(int row, int col)
+    {
+        isDragging = true;
+        selectedCells.Clear();
+        selectedCells.Add((row, col));
+    }
+
+    private void OnMouseEnter(int row, int col)
+    {
+        if (isDragging)
+        {
+            selectedCells.Add((row, col));
+        }
+    }
+
+    private void OnMouseUp()
+    {
+        isDragging = false;        
+        ProcessSelectedCells();
+    }
+
+    private void ProcessSelectedCells()
+    {
+        var selectedGridCells = selectedCells.Select(c => gridService.GetCell(c.row, c.col)).ToList();
+        var validationResult = validationService.IsValidWordSelection(selectedGridCells);
+
+        if (validationResult.IsValid)
+        {
+            foreach (var cell in selectedGridCells)
+            {
+                cell.IsCorrectWord = true;
+            }
+
+            foundWords.Add(validationResult.FormedWord); 
+
+            StateHasChanged(); 
+        }
+        selectedCells.Clear(); 
+    }
+
+
+
+
+    #region Add / Remove words to game
+    private string newWord;
+    private string feedbackMessage;
+
+    private void AddWordToGame()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(newWord))
+            {
+                wordListService.AddWord(newWord);
+                words = wordListService.GetWords();
+                RefreshGrid();
+                newWord = "";
+                feedbackMessage = "Word added successfully.";
+            }
+            else
+            {
+                feedbackMessage = "Word cannot be empty.";
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            feedbackMessage = ex.Message;
+        }
+    }
+
+    private void RemoveWordFromGame(string word)
+    {
+        wordListService.RemoveWord(word);
+        words = wordListService.GetWords();
+        RefreshGrid();
+        feedbackMessage = "Word removed successfully.";
+    }
+    #endregion
+
+    private void RefreshGrid()
+    {
+        gridSize = wordManagementService.CalculateGridSize(words);
+        gridService.InitializeGrid(gridSize.width, gridSize.height);
+        wordManagementService.PlaceWords(words, gridService.GetGrid());
+    }
+    
+}
